@@ -5,7 +5,8 @@ import {
   adminLogin, getDashboardStats, getAllUsers, getAllLoans,
   approveLoan, rejectLoan, getVerifications,
   approveVerification, rejectVerification, getAllRepayments,
-  clearRepayment, updateUserLevel,
+  clearRepayment, updateUserLevel, getVerificationDocument,
+  getVerificationHistory,
 } from "../controllers/admin.controller";
 
 const router = Router();
@@ -18,6 +19,8 @@ router.get("/loans", authenticateAdmin, getAllLoans);
 router.put("/loans/:id/approve", authenticateAdmin, approveLoan);
 router.put("/loans/:id/reject", authenticateAdmin, rejectLoan);
 router.get("/verifications", authenticateAdmin, getVerifications);
+router.get("/verifications/:id/document", authenticateAdmin, getVerificationDocument);
+router.get("/verifications/:id/history", authenticateAdmin, getVerificationHistory);
 router.put("/verifications/:id/approve", authenticateAdmin, approveVerification);
 router.put("/verifications/:id/reject", authenticateAdmin, rejectVerification);
 router.get("/repayments", authenticateAdmin, getAllRepayments);

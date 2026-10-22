@@ -5,10 +5,13 @@ import { generateToken } from "../utils/generateToken";
 import { LoanService } from "../services/loan.service";
 import { PaymentService } from "../services/payment.service";
 import { NotificationService } from "../services/notification.service";
+import { VerificationService } from "../services/verification.service";
+import { verificationRejectionSchema } from "../utils/validators";
 
 const loanService = new LoanService();
 const paymentService = new PaymentService();
 const notificationService = new NotificationService();
+const verificationService = new VerificationService();
 
 export async function adminLogin(req: Request, res: Response, next: NextFunction) {
   try {
@@ -109,10 +112,33 @@ export async function rejectLoan(req: Request, res: Response, next: NextFunction
 export async function getVerifications(_req: Request, res: Response, next: NextFunction) {
   try {
     const verifications = await prisma.verification.findMany({
+      where: { active: true },
       orderBy: { submittedAt: "desc" },
-      include: { user: { select: { fullName: true, phone: true } } },
+      select: {
+        id: true,
+        userId: true,
+        type: true,
+        status: true,
+        adminNote: true,
+        reviewedBy: true,
+        submittedAt: true,
+        reviewedAt: true,
+        storageProvider: true,
+        mimeType: true,
+        sizeBytes: true,
+        imageUrl: true,
+        storageAssetId: true,
+        user: { select: { fullName: true, phone: true } },
+      },
     });
-    res.json(verifications);
+
+    res.json(
+      verifications.map(({ imageUrl, storageAssetId, ...verification }) => ({
+        ...verification,
+        hasDocument: Boolean(storageAssetId || imageUrl),
+        legacyDocument: Boolean(!storageAssetId && imageUrl),
+      })),
+    );
   } catch (error) {
     next(error);
   }
@@ -120,20 +146,12 @@ export async function getVerifications(_req: Request, res: Response, next: NextF
 
 export async function approveVerification(req: Request, res: Response, next: NextFunction) {
   try {
-    const verification = await prisma.verification.update({
-      where: { id: req.params.id },
-      data: { status: "approved", reviewedBy: req.admin!.id, reviewedAt: new Date() },
-    });
-
-    await prisma.user.update({
-      where: { id: verification.userId },
-      data: { verified: true },
-    });
+    const verification = await verificationService.review(req.params.id, req.admin!.id, "approved");
 
     await notificationService.create({
       userId: verification.userId,
       title: "Verification approved",
-      message: "Your identity documents were approved. You are fully verified.",
+      message: "Your identity document was approved.",
       type: "verification",
     });
 
@@ -145,11 +163,13 @@ export async function approveVerification(req: Request, res: Response, next: Nex
 
 export async function rejectVerification(req: Request, res: Response, next: NextFunction) {
   try {
-    const { adminNote } = req.body;
-    const verification = await prisma.verification.update({
-      where: { id: req.params.id },
-      data: { status: "rejected", adminNote, reviewedBy: req.admin!.id, reviewedAt: new Date() },
-    });
+    const { adminNote } = verificationRejectionSchema.parse(req.body ?? {});
+    const verification = await verificationService.review(
+      req.params.id,
+      req.admin!.id,
+      "rejected",
+      adminNote,
+    );
 
     await notificationService.create({
       userId: verification.userId,
@@ -159,6 +179,25 @@ export async function rejectVerification(req: Request, res: Response, next: Next
     });
 
     res.json(verification);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getVerificationDocument(req: Request, res: Response, next: NextFunction) {
+  try {
+    const view = await verificationService.getDocumentViewUrl(req.params.id);
+    res.setHeader("Cache-Control", "no-store");
+    res.json(view);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getVerificationHistory(req: Request, res: Response, next: NextFunction) {
+  try {
+    const history = await verificationService.getHistory(req.params.id);
+    res.json(history);
   } catch (error) {
     next(error);
   }
