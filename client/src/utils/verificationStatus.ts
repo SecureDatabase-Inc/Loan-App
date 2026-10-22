@@ -9,7 +9,7 @@ export interface VerificationDocStatus {
   submittedAt?: string;
   reviewedAt?: string;
   adminNote?: string | null;
-  imageUrl?: string;
+  imageUrl?: string | null;
 }
 
 export function getStatusFromVerification(verifications: Verification[], key: VerificationDocKey): VerificationDocStatus {

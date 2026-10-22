@@ -1,6 +1,12 @@
 import api from "./api";
 import { User, Loan, Repayment } from "@/types/auth.types";
-import { Verification } from "@/types/user.types";
+import { Verification, VerificationEvent } from "@/types/user.types";
+
+export interface VerificationDocumentView {
+  url: string;
+  expiresInSeconds: number | null;
+  legacy: boolean;
+}
 
 export interface DashboardStats {
   totalUsers: number;
@@ -50,6 +56,16 @@ export const adminService = {
 
   async getVerifications(): Promise<Verification[]> {
     const res = await api.get("/admin/verifications");
+    return res.data;
+  },
+
+  async getVerificationDocument(id: string): Promise<VerificationDocumentView> {
+    const res = await api.get(`/admin/verifications/${id}/document`);
+    return res.data;
+  },
+
+  async getVerificationHistory(id: string): Promise<VerificationEvent[]> {
+    const res = await api.get(`/admin/verifications/${id}/history`);
     return res.data;
   },
 

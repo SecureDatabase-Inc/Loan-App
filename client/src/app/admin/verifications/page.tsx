@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/Button";
 import { Toast } from "@/components/ui/Toast";
 import { Modal } from "@/components/ui/Modal";
 import { adminService } from "@/services/admin.service";
-import { Verification } from "@/types/user.types";
-import { formatDate } from "@/utils/formatDate";
+import { VerificationDocument } from "@/components/admin/VerificationDocument";
+import { Verification, VerificationEvent } from "@/types/user.types";
+import { formatDate, formatDateTime } from "@/utils/formatDate";
 
 const TYPE_LABEL: Record<Verification["type"], string> = {
   selfie: "Selfie",
@@ -21,6 +22,9 @@ export default function AdminVerificationsPage() {
   const [loading, setLoading] = useState(true);
   const [rejectTarget, setRejectTarget] = useState<Verification | null>(null);
   const [rejectNote, setRejectNote] = useState("");
+  const [historyTarget, setHistoryTarget] = useState<Verification | null>(null);
+  const [history, setHistory] = useState<VerificationEvent[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [toast, setToast] = useState({ show: false, message: "", type: "success" as "success" | "error" });
 
   const loadData = () => adminService.getVerifications().then(setVerifications).finally(() => setLoading(false));
@@ -68,6 +72,19 @@ export default function AdminVerificationsPage() {
     }
   };
 
+  const openHistory = async (verification: Verification) => {
+    setHistoryTarget(verification);
+    setHistoryLoading(true);
+    setHistory([]);
+    try {
+      setHistory(await adminService.getVerificationHistory(verification.id));
+    } catch {
+      setToast({ show: true, message: "Failed to load review history", type: "error" });
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
   const allReviewed = verifications.length > 0 && verifications.every((v) => v.status !== "pending");
 
   return (
@@ -98,12 +115,7 @@ export default function AdminVerificationsPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {list.map((v) => (
                       <div key={v.id} className="border border-secondary-100 rounded-xl overflow-hidden">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={v.imageUrl}
-                          alt={TYPE_LABEL[v.type]}
-                          className="w-full h-36 object-cover bg-secondary-100"
-                        />
+                        <VerificationDocument verificationId={v.id} alt={TYPE_LABEL[v.type]} />
                         <div className="p-3 flex items-center justify-between">
                           <span className="text-xs font-medium text-secondary-700">{TYPE_LABEL[v.type]}</span>
                           <span
@@ -146,6 +158,7 @@ export default function AdminVerificationsPage() {
                       <th className="text-left py-3 px-4 font-medium text-secondary-500">Type</th>
                       <th className="text-left py-3 px-4 font-medium text-secondary-500">Status</th>
                       <th className="text-left py-3 px-4 font-medium text-secondary-500">Submitted</th>
+                      <th className="text-left py-3 px-4 font-medium text-secondary-500">History</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -167,6 +180,14 @@ export default function AdminVerificationsPage() {
                           </span>
                         </td>
                         <td className="py-3 px-4 text-secondary-500">{formatDate(v.submittedAt)}</td>
+                        <td className="py-3 px-4">
+                          <button
+                            onClick={() => openHistory(v)}
+                            className="text-xs font-medium text-primary-600 hover:text-primary-700"
+                          >
+                            View
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -200,6 +221,30 @@ export default function AdminVerificationsPage() {
             Reject
           </Button>
         </div>
+      </Modal>
+
+      <Modal isOpen={!!historyTarget} onClose={() => setHistoryTarget(null)} title="Review History">
+        {historyLoading ? (
+          <Loader />
+        ) : history.length === 0 ? (
+          <p className="text-sm text-secondary-500">No history recorded for this submission.</p>
+        ) : (
+          <ul className="space-y-3">
+            {history.map((event) => (
+              <li key={event.id} className="text-sm border-b border-secondary-100 pb-2 last:border-0">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium capitalize">{event.action}</span>
+                  <span className="text-xs text-secondary-400">{formatDateTime(event.createdAt)}</span>
+                </div>
+                <p className="text-xs text-secondary-500">
+                  {event.fromStatus ? `${event.fromStatus} → ` : ""}
+                  {event.toStatus || ""} · {event.actorType}
+                </p>
+                {event.note && <p className="text-xs text-secondary-600 mt-1">Note: {event.note}</p>}
+              </li>
+            ))}
+          </ul>
+        )}
       </Modal>
 
       <Toast message={toast.message} type={toast.type} isVisible={toast.show} onClose={() => setToast({ ...toast, show: false })} />
