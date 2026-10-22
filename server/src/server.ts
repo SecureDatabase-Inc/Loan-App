@@ -10,8 +10,11 @@ import { startExpireLoansJob } from "./jobs/expireLoans.job";
 import { startReminderJob } from "./jobs/reminder.job";
 import { startCleanupJob } from "./jobs/cleanup.job";
 import { logger } from "./utils/logger";
+import { assertStorageConfig } from "./config/storage";
 
 const PORT = process.env.PORT || 5000;
+
+assertStorageConfig();
 
 const server = http.createServer(app);
 const io = initSocket(server);

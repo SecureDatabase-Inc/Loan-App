@@ -1,33 +1,25 @@
 import { Request, Response, NextFunction } from "express";
-import { UploadService } from "../services/upload.service";
-import prisma from "../config/db";
-import { VerificationType } from "@prisma/client";
+import { VerificationService, parseVerificationType } from "../services/verification.service";
+import { HttpError } from "../utils/HttpError";
 
-const uploadService = new UploadService();
-
-const VALID_TYPES: string[] = ["selfie", "ghana_card_front", "ghana_card_back"];
+const verificationService = new VerificationService();
 
 export async function uploadVerificationImage(req: Request, res: Response, next: NextFunction) {
   try {
-    if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+    if (!req.file) throw new HttpError(400, "No file uploaded.");
 
-    const type = req.body.type || "selfie";
-    if (!VALID_TYPES.includes(type)) {
-      return res.status(400).json({ message: `Invalid type. Must be one of: ${VALID_TYPES.join(", ")}` });
-    }
-
-    const imageUrl = await uploadService.uploadToCloudinary(req.file.path, `verifications/${type}`);
-
-    const verification = await prisma.verification.create({
-      data: {
-        userId: req.user!.id,
-        type: type as VerificationType,
-        imageUrl,
-        status: "pending",
-      },
+    const type = parseVerificationType(req.body?.type);
+    const verification = await verificationService.submit(req.user!.id, type, {
+      buffer: req.file.buffer,
+      mimeType: req.file.mimetype,
     });
 
-    res.status(201).json(verification);
+    res.status(201).json({
+      id: verification.id,
+      type: verification.type,
+      status: verification.status,
+      submittedAt: verification.submittedAt,
+    });
   } catch (error) {
     next(error);
   }
