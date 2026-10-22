@@ -51,16 +51,40 @@ Relations: loan, user
 
 ### Verification
 - id (String, cuid, PK)
-- userId (FK -> User)
+- userId (FK -> User, onDelete Cascade)
 - type (enum: selfie | ghana_card_front | ghana_card_back)
-- imageUrl (String)
 - status (enum: pending | approved | rejected)
+- storageProvider (String?, provider that holds the asset)
+- storageAssetId (String?, provider-owned identifier)
+- mimeType (String?)
+- sizeBytes (Int?)
+- imageUrl (String?, legacy rows only; null for new submissions)
+- active (Boolean, default true; false once superseded)
 - adminNote (String?)
-- reviewedBy (String?)
+- reviewedBy (String?, admin id)
 - submittedAt, reviewedAt (timestamps)
 - createdAt, updatedAt (timestamps)
 
-Relations: user
+Indexes: `(userId, type)`, `(active, status, submittedAt)`.
+A partial unique index `Verification_active_user_type_key` enforces at most one
+active submission per `(userId, type)` where `active = true`. It is created in
+the migration SQL because Prisma cannot express partial indexes.
+
+Relations: user, events
+
+### VerificationEvent
+- id (String, cuid, PK)
+- verificationId (FK -> Verification, onDelete Cascade)
+- actorType (String: `user` | `admin`)
+- actorId (String?)
+- action (String: `submitted` | `superseded` | `approved` | `rejected`)
+- fromStatus, toStatus (enum, nullable)
+- note (String?)
+- createdAt (timestamp)
+
+Index: `(verificationId, createdAt)`.
+
+Relations: verification
 
 ### Admin
 - id (String, cuid, PK)
@@ -84,10 +108,20 @@ Relations: user
 
 ## Migrations
 
-No migrations are committed to the repo. Generate the initial migration with:
+Migrations are committed under `server/prisma/migrations/`:
+
+- `20260912000000_init` — initial schema.
+- `20261022090000_kyc_storage_hardening` — adds the storage/asset columns,
+  `VerificationEvent`, indexes, the active-submission unique index, and makes
+  `imageUrl` nullable. It marks historical duplicate `(userId, type)` rows
+  inactive without deleting them.
+
+Apply in CI or on deploy with:
 
 ```bash
 cd server
-npx prisma migrate dev --name init
-npx prisma db seed
+npx prisma migrate deploy
 ```
+
+For local schema iteration use `npx prisma migrate dev`. Seed with
+`npx prisma db seed`.
