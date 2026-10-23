@@ -37,3 +37,9 @@ export const repaymentSchema = z.object({
   amount: z.number().positive("Amount must be positive"),
   method: z.string().optional(),
 });
+
+export const verificationTypeSchema = z.enum(["selfie", "ghana_card_front", "ghana_card_back"]);
+
+export const verificationRejectionSchema = z.object({
+  adminNote: z.string().max(500).optional(),
+});

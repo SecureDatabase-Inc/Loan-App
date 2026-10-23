@@ -97,10 +97,10 @@ export async function deleteAccount(req: Request, res: Response, next: NextFunct
 export async function getMyVerifications(req: Request, res: Response, next: NextFunction) {
   try {
     const verifications = await prisma.verification.findMany({
-      where: { userId: req.user!.id },
+      where: { userId: req.user!.id, active: true },
       orderBy: { submittedAt: "desc" },
       select: {
-        id: true, type: true, status: true, imageUrl: true, adminNote: true,
+        id: true, type: true, status: true, adminNote: true,
         reviewedBy: true, submittedAt: true, reviewedAt: true,
       },
     });
