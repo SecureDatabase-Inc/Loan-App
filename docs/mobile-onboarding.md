@@ -30,21 +30,27 @@ repayments, transactions, KYC, account info) show `AuthPrompt`. No guest
 account, token, or dummy session is ever created; the API remains the security
 authority.
 
-## Phase 4 pending (requires approval)
+## Phase 4 implemented
 
-1. Static export: `next.config.js` `output: "export"`; remove `middleware.ts`
-   (already superseded by `RequireAuth`); convert `dashboard/loans/[id]` to a
-   query-param route.
-2. Native auth: Bearer-token path (server already supports `Authorization:
-   Bearer`); secure storage backed by Android Keystore (NOT plain Capacitor
-   Preferences); keep tokens out of logs/URLs/source control.
-3. CORS / `sameOriginGuard` allowlist must include Capacitor origins
-   (`https://localhost`, `capacitor://localhost`) for native builds.
-4. Disable the PWA service worker inside the native shell.
+- Static export (`output: "export"`, `trailingSlash`, `images.unoptimized`) — `client/next.config.js`.
+- Dynamic route converted: `/dashboard/loans/detail?id=...` (no `[id]`).
+- `middleware.ts` removed; `RequireAuth` (borrower) and `RequireAdmin` (admin) client guards.
+- Bearer token plumbing: `api` attaches `Authorization: Bearer` from the in-memory token; `auth.service` persists the issued token to Keystore-backed secure storage on native and never to localStorage/Preferences.
+- CORS / `sameOriginGuard` use a shared allowlist (`server/src/config/origins.ts`) including `https://localhost` and `capacitor://localhost`, plus `ALLOWED_ORIGINS` for LAN dev. No wildcard.
+- Service worker registration and stale-SW cleanup are disabled in the native shell (`isNativeApp()`).
+- API URL resolution validates native builds (HTTPS + non-localhost for release; LAN HTTP allowed in debug).
 
-## Phase 5 pending
+## Phase 5 prepared (toolchain pending)
 
-Capacitor + Android project, app icon/adaptive icon, native splash, signing
-config (never commit keys/secrets/`.env`), debug APK, release APK config, AAB
-instructions. Toolchain (JDK 17–21, Android SDK/Studio) install requires
-approval.
+- Capacitor config (`client/capacitor.config.ts`), Android project (`client/android/`), app + adaptive icons and splash generated.
+- Signing config reads `RELEASE_*` from env/gradle properties; debug manifest allows cleartext for LAN dev; release manifest defaults to `usesCleartextTraffic=false`.
+- Build script `client/scripts/build-android.mjs` validates env, builds the export, syncs Capacitor, then stops with the toolchain proposal when the SDK is absent.
+- E2E suite `client/e2e/run.mjs` (Playwright + stub API) covers guards, Bearer, cookie session, logout, admin, native SW exclusion — 10/10 passing.
+
+## Toolchain installation proposal (awaiting approval)
+
+- JDK 17 or 21 (Temurin 21 recommended; current machine has JDK 25 only).
+- Android Studio (or command-line tools) + SDK Platform 35 + Build-Tools 35.x + Platform-Tools.
+- ~6-8 GB total. Env: `JAVA_HOME`, `ANDROID_HOME`/`ANDROID_SDK_ROOT`, PATH entries.
+- Existing JDK 25 remains; switch JAVA_HOME for Gradle. Node/npm unaffected.
+- No JDK/SDK/Studio has been installed by this work. Run `npm run build:android:debug` once approved.
