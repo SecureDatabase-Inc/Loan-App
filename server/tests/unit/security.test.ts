@@ -32,6 +32,19 @@ describe("sameOriginGuard", () => {
     expect(() => run({ origin: "http://localhost:3000" })).not.toThrow();
   });
 
+  it("allows the Capacitor https WebView origin", () => {
+    expect(() => run({ origin: "https://localhost" })).not.toThrow();
+  });
+
+  it("allows the Capacitor custom-scheme origin", () => {
+    expect(() => run({ origin: "capacitor://localhost" })).not.toThrow();
+  });
+
+  it("allows configured extra origins", () => {
+    process.env.ALLOWED_ORIGINS = "https://staging.example.com";
+    expect(() => run({ origin: "https://staging.example.com" })).not.toThrow();
+  });
+
   it("allows origin-free requests (server-to-server, e.g. gateway webhook)", () => {
     expect(() => run({})).not.toThrow();
   });

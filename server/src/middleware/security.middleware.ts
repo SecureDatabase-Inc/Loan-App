@@ -1,15 +1,15 @@
 import { Request, Response, NextFunction } from "express";
 import { HttpError } from "../utils/HttpError";
-
-const ALLOWED_ORIGINS = new Set([
-  process.env.CLIENT_URL || "http://localhost:3000",
-  "http://localhost:3000",
-]);
+import { buildAllowedOrigins, normalizeOrigin } from "../config/origins";
 
 /**
  * CSRF defense on top of SameSite=Lax: state-changing requests must either
  * carry no Origin/Referer (server-to-server integrations such as the
  * payment webhook) or come from an allowlisted origin.
+ *
+ * The allowlist is shared with CORS (`config/origins.ts`) and includes the
+ * packaged Capacitor WebView origins so the native app can call the API
+ * without loosening the web portal's rules. No wildcard is ever allowed.
  */
 export function sameOriginGuard(req: Request, _res: Response, next: NextFunction) {
   if (["GET", "HEAD", "OPTIONS"].includes(req.method)) return next();
@@ -17,14 +17,10 @@ export function sameOriginGuard(req: Request, _res: Response, next: NextFunction
   const headerValue = req.headers.origin || req.headers.referer;
   if (!headerValue) return next();
 
-  let origin: string;
-  try {
-    origin = new URL(headerValue).origin;
-  } catch {
-    return next();
-  }
+  const origin = normalizeOrigin(headerValue);
+  if (!origin) return next();
 
-  if (!ALLOWED_ORIGINS.has(origin)) {
+  if (!buildAllowedOrigins().has(origin)) {
     throw new HttpError(403, `Cross-origin request rejected from ${origin}`);
   }
 
