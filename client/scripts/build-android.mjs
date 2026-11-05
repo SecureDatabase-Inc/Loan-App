@@ -56,7 +56,13 @@ run("node", ["node_modules/next/dist/bin/next", "build"], {
 run("npx", ["cap", "sync", "android"]);
 
 // 4. Toolchain check.
-const sdkRoot = process.env.ANDROID_SDK_ROOT || process.env.ANDROID_HOME;
+// 4. Toolchain check.
+const sdkRoot =
+  process.env.ANDROID_SDK_ROOT ||
+  process.env.ANDROID_HOME ||
+  (process.platform === "win32"
+    ? path.join(process.env.USERPROFILE || "", "Android", "Sdk")
+    : path.join(process.env.HOME || "", "Android", "Sdk"));
 const adb = sdkRoot ? path.join(sdkRoot, "platform-tools", process.platform === "win32" ? "adb.exe" : "adb") : null;
 const hasSdk = Boolean(sdkRoot && adb && fs.existsSync(adb));
 
@@ -110,7 +116,18 @@ RELEASE_KEY_ALIAS, RELEASE_KEY_PASSWORD. Never commit the keystore.
 }
 
 // 5. Gradle build (only if the SDK is present).
-const gradle = process.platform === "win32" ? "gradlew.bat" : "./gradlew";
+const javaHome = process.env.JAVA_HOME || "C:/Users/Nana Obeng/tools/jdk-21.0.13+9";
 const task = release ? "assembleRelease" : "assembleDebug";
-run(path.join(root, "android", gradle), [task], {});
+const gradleCwd = path.join(root, "android");
+console.log(`\n> cd ${gradleCwd} && gradlew.bat ${task}`);
+const gradleRun = spawnSync("gradlew.bat", [task], {
+  cwd: gradleCwd,
+  env: { ...process.env, JAVA_HOME: javaHome, ANDROID_HOME: sdkRoot, ANDROID_SDK_ROOT: sdkRoot },
+  stdio: "inherit",
+  shell: true,
+});
+if (gradleRun.status !== 0) {
+  console.error("Gradle build failed.");
+  process.exit(gradleRun.status ?? 1);
+}
 console.log(`\nBuild finished. Output: android/app/build/outputs/apk/${flavor}/`);
