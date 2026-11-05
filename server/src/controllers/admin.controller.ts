@@ -41,6 +41,16 @@ export async function adminLogin(req: Request, res: Response, next: NextFunction
   }
 }
 
+/**
+ * Lightweight session probe used by the static-exported admin client. The
+ * httpOnly `admin_token` cookie cannot be read from JavaScript, so the SPA
+ * asks the API whether the current session is still valid. It does not return
+ * a token and performs no privileged work.
+ */
+export function getAdminSession(req: Request, res: Response) {
+  res.json({ admin: req.admin });
+}
+
 export async function getDashboardStats(_req: Request, res: Response, next: NextFunction) {
   try {
     const [totalUsers, totalLoans, activeLoans, pendingLoans, repaidLoans, totalVerified] = await Promise.all([

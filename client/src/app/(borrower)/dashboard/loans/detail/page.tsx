@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Button } from "@/components/ui/Button";
@@ -23,20 +23,40 @@ interface TimelineStep {
 
 const IN_LOAN = new Set(["active", "overdue", "approved", "pending"]);
 
+/**
+ * Static-export compatible loan detail route. The loan id is passed as
+ * `/dashboard/loans/detail?id=...` instead of a dynamic path segment, because
+ * `output: "export"` cannot emit a page for an unbounded `[id]` param.
+ */
 export default function LoanDetailPage() {
-  const params = useParams<{ id: string }>();
   const router = useRouter();
   const [loan, setLoan] = useState<LoanDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [showRepayment, setShowRepayment] = useState(false);
+  const [loanId, setLoanId] = useState<string | null>(null);
+  const [queryReady, setQueryReady] = useState(false);
+
+  // Read from window.location instead of useSearchParams() so the page does not
+  // require a Suspense boundary in the static export.
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("id");
+    setLoanId(id);
+    setQueryReady(true);
+  }, []);
 
   useEffect(() => {
+    if (!queryReady) return;
+    if (!loanId) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     loanService
-      .getById(params.id)
+      .getById(loanId)
       .then(setLoan)
       .catch(() => setLoan(null))
       .finally(() => setLoading(false));
-  }, [params.id]);
+  }, [loanId, queryReady]);
 
   if (loading) return <Loader fullScreen />;
 
@@ -237,7 +257,10 @@ export default function LoanDetailPage() {
         <RepaymentForm
           loanId={loan.id}
           amount={pendingRepay?.amount ?? loan.totalDue}
-          onSuccess={() => { setShowRepayment(false); loanService.getById(params.id).then(setLoan); }}
+          onSuccess={() => {
+            setShowRepayment(false);
+            if (loanId) loanService.getById(loanId).then(setLoan);
+          }}
         />
       </Modal>
     </div>

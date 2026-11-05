@@ -2,7 +2,7 @@ import { Router } from "express";
 import { authenticateAdmin } from "../middleware/admin.middleware";
 import { authIpLimiter, adminLoginLimiter } from "../middleware/authLimiter";
 import {
-  adminLogin, getDashboardStats, getAllUsers, getAllLoans,
+  adminLogin, getAdminSession, getDashboardStats, getAllUsers, getAllLoans,
   approveLoan, rejectLoan, getVerifications,
   approveVerification, rejectVerification, getAllRepayments,
   clearRepayment, updateUserLevel, getVerificationDocument,
@@ -12,6 +12,7 @@ import {
 const router = Router();
 
 router.post("/login", authIpLimiter, adminLoginLimiter, adminLogin);
+router.get("/session", authenticateAdmin, getAdminSession);
 router.get("/dashboard", authenticateAdmin, getDashboardStats);
 router.get("/users", authenticateAdmin, getAllUsers);
 router.put("/users/:id/level", authenticateAdmin, updateUserLevel);
