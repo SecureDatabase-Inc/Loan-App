@@ -47,10 +47,32 @@ authority.
 - Build script `client/scripts/build-android.mjs` validates env, builds the export, syncs Capacitor, then stops with the toolchain proposal when the SDK is absent.
 - E2E suite `client/e2e/run.mjs` (Playwright + stub API) covers guards, Bearer, cookie session, logout, admin, native SW exclusion — 10/10 passing.
 
-## Toolchain installation proposal (awaiting approval)
+## Toolchain installation record (completed)
 
-- JDK 17 or 21 (Temurin 21 recommended; current machine has JDK 25 only).
-- Android Studio (or command-line tools) + SDK Platform 35 + Build-Tools 35.x + Platform-Tools.
-- ~6-8 GB total. Env: `JAVA_HOME`, `ANDROID_HOME`/`ANDROID_SDK_ROOT`, PATH entries.
-- Existing JDK 25 remains; switch JAVA_HOME for Gradle. Node/npm unaffected.
-- No JDK/SDK/Studio has been installed by this work. Run `npm run build:android:debug` once approved.
+Installed locally (no system-wide env changes; project-specific config):
+- JDK 21.0.13 (Temurin) at `C:/Users/Nana Obeng/tools/jdk-21.0.13+9`.
+- Android SDK at `C:/Users/Nana Obeng/Android/Sdk` (platform-tools, platforms;android-35, build-tools;35.0.0).
+- Gradle 8.14.3 (downloaded by the wrapper).
+- Project config: `android/gradle.properties` sets `org.gradle.java.home`; `android/local.properties` sets `sdk.dir` (gitignored).
+
+## First debug APK (generated)
+
+- Path: `client/android/app/build/outputs/apk/debug/app-debug.apk`
+- Size: 4.99 MB (5,234,555 bytes)
+- Package: `com.boamicrofinance.loanapp`, versionCode 1, versionName 1.0.0
+- App label: "BoA Micro Finance"
+- minSdk 24, targetSdk 36
+- Permissions: `INTERNET` only
+- Debug manifest: `usesCleartextTraffic=true` (LAN HTTP allowed for device testing)
+- Build command: `npm run build:android:debug` with `NEXT_PUBLIC_API_URL=http://<LAN-IP>:5000/api`
+- Result: BUILD SUCCESSFUL (123 tasks, 5m 16s)
+- APK inspection: `aapt dump badging` confirms package/label/sdk; `usesCleartextTraffic=true` confirmed.
+- No device connected during build, so on-device install was not verified.
+
+## Installing the APK on your phone
+
+1. Enable "Install unknown apps" for your browser/file manager (Settings → Apps → Special access).
+2. Copy `app-debug.apk` to the phone (USB, cloud drive, or `adb install app-debug.apk` if a device is connected with USB debugging).
+3. Tap the APK to install.
+4. Ensure the API server is reachable on the LAN at the configured URL; the phone and the server must be on the same network.
+5. Release builds are separate: they require HTTPS and never use cleartext; signing keys are not yet generated.
