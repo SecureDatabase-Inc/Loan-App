@@ -18,7 +18,10 @@ export default function ProfilePage() {
   const { isAuthenticated, isLoading } = useAuth();
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
-  const logout = useAuthStore((s) => s.logout);
+  const handleSignOut = async () => {
+    await authService.logout();
+    router.push("/");
+  };
   const [editing, setEditing] = useState(false);
   const [toast, setToast] = useState({ show: false, message: "", type: "success" as "success" | "error" });
 
@@ -102,7 +105,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <Button variant="danger" fullWidth onClick={() => { logout(); router.push("/"); }}>
+        <Button variant="danger" fullWidth onClick={handleSignOut}>
           Sign Out
         </Button>
       </main>

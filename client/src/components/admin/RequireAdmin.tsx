@@ -7,6 +7,10 @@ import { Loader } from "@/components/ui/Loader";
 
 const LOGIN_PATH = "/admin/login";
 
+function isLoginPath(pathname: string | null): boolean {
+  return (pathname ?? "").replace(/\/+$/, "") === LOGIN_PATH;
+}
+
 /**
  * Client-side replacement for the old `middleware.ts` admin check, which
  * `output: "export"` cannot run. The admin session cookie is httpOnly, so the
@@ -19,7 +23,7 @@ const LOGIN_PATH = "/admin/login";
 export function RequireAdmin({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const onLogin = pathname === LOGIN_PATH;
+  const onLogin = isLoginPath(pathname);
   const [status, setStatus] = useState<"checking" | "ok">(onLogin ? "ok" : "checking");
 
   useEffect(() => {

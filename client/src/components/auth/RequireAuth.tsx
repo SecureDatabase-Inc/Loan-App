@@ -20,7 +20,8 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (isLoading || isAuthenticated) return;
-    const next = pathname && pathname !== "/" ? `?next=${encodeURIComponent(pathname)}` : "";
+    const target = pathname && pathname !== "/" ? pathname.replace(/\/+$/, "") : "";
+    const next = target ? `?next=${encodeURIComponent(target)}` : "";
     router.replace(`/login${next}`);
   }, [isLoading, isAuthenticated, pathname, router]);
 

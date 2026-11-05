@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { User } from "@/types/auth.types";
+import { secureStorage } from "@/utils/secureStorage";
 
 interface AuthState {
   user: User | null;
@@ -24,6 +25,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     if (typeof window !== "undefined") {
       document.cookie = "token=; Max-Age=0; path=/";
     }
+    // Clears Keystore-backed storage on native; no-op on web.
+    void secureStorage.clearToken();
     set({ user: null, token: null, isAuthenticated: false, isLoading: false });
   },
 }));
