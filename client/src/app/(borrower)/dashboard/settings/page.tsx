@@ -11,6 +11,7 @@ import { ChangePasswordForm } from "@/components/forms/ChangePasswordForm";
 import { DeleteAccountModal } from "@/components/forms/DeleteAccountModal";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthStore } from "@/store/authStore";
+import { authService } from "@/services/auth.service";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -28,6 +29,11 @@ export default function SettingsPage() {
   const handleDeleted = () => {
     setShowDeleteModal(false);
     logout();
+    router.push("/");
+  };
+
+  const handleSignOut = async () => {
+    await authService.logout();
     router.push("/");
   };
 
@@ -59,7 +65,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <Button variant="ghost" fullWidth onClick={() => { logout(); router.push("/"); }}>
+        <Button variant="ghost" fullWidth onClick={handleSignOut}>
           Sign Out
         </Button>
       </main>

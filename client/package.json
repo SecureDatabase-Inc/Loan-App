@@ -6,10 +6,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:e2e": "node e2e/run.mjs",
+    "build:android:debug": "node scripts/build-android.mjs",
+    "build:android:release": "node scripts/build-android.mjs --release"
   },
   "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/core": "^8.6.0",
     "axios": "^1.7.2",
+    "capacitor-secure-storage-plugin": "^0.13.0",
     "framer-motion": "^11.2.10",
     "next": "^14.2.3",
     "react": "^18.3.1",
@@ -18,11 +24,14 @@
     "zustand": "^4.5.2"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.6.0",
     "@types/node": "^20.12.12",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "^10.4.19",
+    "playwright-core": "^1.49.0",
     "postcss": "^8.4.38",
+    "sharp": "^0.35.5",
     "tailwindcss": "^3.4.3",
     "typescript": "^5.4.5"
   }

@@ -94,7 +94,7 @@ export default function DashboardPage() {
             <Loader size="sm" />
           ) : activeLoan && activeLoan.status === "active" ? (
             <div className="space-y-3">
-              <ActiveLoanCard loan={activeLoan} onClick={() => router.push(`/dashboard/loans/${activeLoan.id}`)} />
+              <ActiveLoanCard loan={activeLoan} onClick={() => router.push(`/dashboard/loans/detail?id=${activeLoan.id}`)} />
               <Button fullWidth onClick={() => setShowRepayment(true)}>
                 Repay Now
               </Button>
@@ -108,7 +108,7 @@ export default function DashboardPage() {
               </p>
               <div className="flex flex-col gap-2">
                 <Button fullWidth onClick={() => setShowRepayment(true)}>Repay Now</Button>
-                <Button fullWidth variant="ghost" onClick={() => router.push(`/dashboard/loans/${activeLoan.id}`)}>
+                <Button fullWidth variant="ghost" onClick={() => router.push(`/dashboard/loans/detail?id=${activeLoan.id}`)}>
                   View Loan Details
                 </Button>
               </div>
@@ -121,7 +121,7 @@ export default function DashboardPage() {
               </p>
               <div className="flex flex-col gap-2">
                 <Button fullWidth onClick={() => setShowRepayment(true)}>Repay Now</Button>
-                <Button fullWidth variant="ghost" onClick={() => router.push(`/dashboard/loans/${activeLoan.id}`)}>
+                <Button fullWidth variant="ghost" onClick={() => router.push(`/dashboard/loans/detail?id=${activeLoan.id}`)}>
                   View Loan Details
                 </Button>
               </div>

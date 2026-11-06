@@ -9,6 +9,7 @@ import { Toast } from "@/components/ui/Toast";
 import { authService } from "@/services/auth.service";
 import { useAuthStore } from "@/store/authStore";
 import { isValidPhone, getPasswordStrength } from "@/utils/validators";
+import { getSafeNextPath } from "@/utils/redirect";
 
 export function RegisterForm() {
   const router = useRouter();
@@ -39,7 +40,7 @@ export function RegisterForm() {
       });
       setUser(result.user);
       setToast({ show: true, message: "Account created! Welcome.", type: "success" });
-      setTimeout(() => router.push("/dashboard"), 500);
+      setTimeout(() => router.push(getSafeNextPath()), 500);
     } catch (err: any) {
       const msg = err.response?.data?.message || "Registration failed";
       setError(msg);
