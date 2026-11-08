@@ -24,6 +24,12 @@ export const adminService = {
     return res.data;
   },
 
+  /** Session probe for the static-exported admin client (no token returned). */
+  async getSession(): Promise<{ admin: { id: string; email: string; role: string } }> {
+    const res = await api.get("/admin/session", { skipAuthRedirect: true });
+    return res.data;
+  },
+
   async getDashboard(): Promise<DashboardStats> {
     const res = await api.get("/admin/dashboard");
     return res.data;

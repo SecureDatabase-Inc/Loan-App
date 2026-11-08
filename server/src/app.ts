@@ -13,14 +13,21 @@ import notificationRoutes from "./routes/notification.routes";
 import { errorHandler } from "./middleware/error.middleware";
 import { apiLimiter } from "./middleware/rateLimiter";
 import { sameOriginGuard } from "./middleware/security.middleware";
+import { buildAllowedOrigins, normalizeOrigin } from "./config/origins";
 
 const app = express();
 
+const allowedOrigins = buildAllowedOrigins();
+
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 app.use(cors({
-  origin: process.env.NODE_ENV === "production"
-    ? (process.env.CLIENT_URL || "http://localhost:3000")
-    : "http://localhost:3000",
+  origin: (origin, callback) => {
+    // No Origin header: same-origin navigation, server-to-server calls and
+    // non-browser clients. The same-origin guard handles their CSRF rules.
+    if (!origin) return callback(null, true);
+    const normalized = normalizeOrigin(origin);
+    callback(null, normalized !== null && allowedOrigins.has(normalized));
+  },
   credentials: true,
 }));
 app.use("/api/payments/webhook", express.raw({ type: "*/*" }));

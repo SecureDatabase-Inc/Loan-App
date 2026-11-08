@@ -3,9 +3,12 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { AuthPrompt } from "@/components/auth/AuthPrompt";
+import { BrandMark } from "@/components/brand/Logo";
 
-export default function LandingPage() {
+export default function HomePage() {
   const [scrolled, setScrolled] = useState(false);
+  const [promptOpen, setPromptOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -18,7 +21,10 @@ export default function LandingPage() {
       {/* Nav */}
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? "bg-white/80 backdrop-blur-lg shadow-sm" : "bg-transparent"}`}>
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <span className="text-xl font-extrabold text-gradient">BoA Micro Finance</span>
+          <Link href="/home" className="flex items-center gap-2">
+            <BrandMark size={28} />
+            <span className="text-xl font-extrabold text-gradient">BoA Micro Finance</span>
+          </Link>
           <div className="flex items-center gap-3">
             <Link href="/login" className="btn-ghost">Sign In</Link>
             <Link href="/register" className="btn-primary !py-2 !px-4">Get Started</Link>
@@ -47,6 +53,17 @@ export default function LandingPage() {
                 <Link href="/register" className="btn-primary text-center">Create Free Account</Link>
                 <Link href="/login" className="btn-secondary text-center">Sign In</Link>
               </div>
+              <p className="mt-5 text-sm text-secondary-500">
+                Browsing as a guest?{" "}
+                <button
+                  type="button"
+                  onClick={() => setPromptOpen(true)}
+                  className="font-semibold text-primary-600 hover:underline"
+                >
+                  Apply for a loan
+                </button>{" "}
+                — you&apos;ll need an account to continue.
+              </p>
               <div className="flex items-center gap-8 mt-10 pt-10 border-t border-secondary-100">
                 {["GHS 10K+", "5 Min", "4.8 ★"].map((stat) => (
                   <div key={stat}>
@@ -159,6 +176,14 @@ export default function LandingPage() {
               </motion.div>
             ))}
           </div>
+          <div className="mt-8 text-center">
+            <button type="button" onClick={() => setPromptOpen(true)} className="btn-primary">
+              Apply for a loan
+            </button>
+            <p className="mt-3 text-xs text-secondary-400">
+              Guests can browse, but loan applications need an account.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -211,6 +236,8 @@ export default function LandingPage() {
           <p className="text-xs text-secondary-500">&copy; {new Date().getFullYear()} BoA Micro Finance. All rights reserved.</p>
         </div>
       </footer>
+
+      <AuthPrompt isOpen={promptOpen} onClose={() => setPromptOpen(false)} nextPath="/dashboard" />
     </div>
   );
 }

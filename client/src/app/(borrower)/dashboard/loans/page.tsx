@@ -53,7 +53,7 @@ export default function LoansPage() {
           <div className="grid gap-4">
             {loans.map((loan, i) => (
               <motion.div key={loan.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-                <LoanCard loan={loan} onClick={() => router.push(`/dashboard/loans/${loan.id}`)} />
+                <LoanCard loan={loan} onClick={() => router.push(`/dashboard/loans/detail?id=${loan.id}`)} />
               </motion.div>
             ))}
           </div>
